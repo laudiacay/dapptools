@@ -63,7 +63,7 @@ in rec {
           //
           fetchSolcVersions { owner = "dapphub"; attr = "unreleased_" + super.system; }
         );
-  solc = solc-versions.solc_0_6_7;
+  solc = solc-static-versions.solc_0_8_0;
 
   solc-static-versions =
     let
