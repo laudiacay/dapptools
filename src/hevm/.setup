@@ -1,3 +1,0 @@
-
-export HEVM="/Users/laudiacay/.cabal/bin/hevm"
-alias hevm="/Users/laudiacay/.cabal/bin/hevm"
