@@ -123,8 +123,7 @@ instance Real Word where
   toRational (C _ x) = toRational x
 
 instance Ord Word where
-  compare (C _ x) (C _ y) = compare x y
-
+  compare (C _ x) (C _ y) = compare x y  
 
 -- | Symbolic words of 256 bits, possibly annotated with additional
 --   "insightful" information
