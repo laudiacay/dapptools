@@ -281,7 +281,7 @@ fromBlockchainCase' block tx preState postState =
           where
             toAddr = fromMaybe (EVM.createAddress origin senderNonce) (txToAddr tx)
             senderNonce = EVM.wordValue $ view (accountAt origin . nonce) preState
-            feeSchedule = EVM.FeeSchedule.istanbul
+            feeSchedule = EVM.FeeSchedule.berlin
             toCode = Map.lookup toAddr preState
             theCode = if isCreate
                       then EVM.InitCode (txData tx)

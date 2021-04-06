@@ -45,6 +45,9 @@ data FeeSchedule n = FeeSchedule
   , g_pairing_base :: n
   , g_fround :: n
   , r_block :: n
+  , g_cold_sload :: n
+  , g_cold_account_access :: n
+  , g_warm_storage_read :: n
   } deriving Show
 
 -- For the purposes of this module, we define an EIP as just a fee
@@ -114,6 +117,9 @@ homestead = FeeSchedule
   , g_pairing_point = 80000
   , g_pairing_base = 100000
   , g_fround = 1
+  , g_cold_sload = 2100
+  , g_cold_account_access = 2600
+  , g_warm_storage_read = 100
   , r_block = 2000000000000000000
   }
 
@@ -156,5 +162,20 @@ eip2200 fees = fees
   , r_sclear = 15000 -- not changed
   }
 
+  -- EIP2929: Gas cost increases for state access opcodes
+  -- <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2929.md>
+eip2929 :: EIP n
+eip2929 fees = fees
+  { g_sload = 100 
+  , g_sreset = 5000 - 2100 
+  , g_call = 2600
+  , g_balance = 2600
+  , g_extcode = 2600
+  , g_extcodehash = 2600
+  }
+
 istanbul :: Num n => FeeSchedule n
 istanbul = eip1108 . eip1884 . eip2028 . eip2200 $ metropolis
+
+berlin :: Num n => FeeSchedule n
+berlin = eip2929 istanbul
