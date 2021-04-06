@@ -1,32 +1,21 @@
-{-# Language ImplicitParams #-}
-{-# Language ConstraintKinds #-}
-{-# Language FlexibleInstances #-}
-{-# Language DataKinds #-}
-{-# Language GADTs #-}
-{-# Language RecordWildCards #-}
-{-# Language ScopedTypeVariables #-}
-{-# Language StandaloneDeriving #-}
-{-# Language StrictData #-}
-{-# Language TemplateHaskell #-}
-{-# Language TypeOperators #-}
-{-# Language ViewPatterns #-}
+{-# LANGUAGE ConstraintKinds     #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE GADTs               #-}
+{-# LANGUAGE ImplicitParams      #-}
+{-# LANGUAGE RecordWildCards     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving  #-}
+{-# LANGUAGE StrictData          #-}
+{-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE ViewPatterns        #-}
 
 module EVM where
 
-import Prelude hiding (log, Word, exponent)
+import           Prelude                      hiding (Word, exponent, log)
 
-import Data.SBV hiding (Word, output, Unknown)
-import Data.Proxy (Proxy(..))
-import EVM.ABI
-import EVM.Types
-import EVM.Solidity
-import EVM.Concrete (createAddress, wordValue, keccakBlob, create2Address)
-import EVM.Symbolic
-import EVM.Op
-import EVM.FeeSchedule (FeeSchedule (..))
-import Options.Generic as Options
-import qualified EVM.Precompiled
-
+<<<<<<< HEAD
 import Data.Binary.Get (runGetOrFail)
 import Data.Text (Text)
 import Data.Word (Word8, Word32)
@@ -53,13 +42,53 @@ import qualified Data.Map.Strict      as Map
 import qualified Data.Sequence        as Seq
 import qualified Data.Tree.Zipper     as Zipper
 import qualified Data.Vector.Storable as Vector
+=======
+import           Data.Proxy                   (Proxy (..))
+import           Data.SBV                     hiding (Unknown, Word, output)
+import           EVM.ABI
+import           EVM.Concrete                 (create2Address, createAddress,
+                                               keccakBlob, wordValue)
+import           EVM.FeeSchedule              (FeeSchedule (..))
+import           EVM.Op
+import qualified EVM.Precompiled
+import           EVM.Solidity
+import           EVM.Symbolic
+import           EVM.Types
+import           Options.Generic              as Options
+
+import           Control.Lens                 hiding ((:<), op, (.>), (|>))
+import           Control.Monad.State.Strict   hiding (state)
+import           Data.Binary.Get              (runGetOrFail)
+import           Data.Text                    (Text)
+import           Data.Word                    (Word32, Word8)
+
+import           Data.ByteString              (ByteString)
+import           Data.ByteString.Lazy         (fromStrict)
+import           Data.Foldable                (toList)
+import           Data.Map.Strict              (Map)
+import           Data.Maybe                   (fromMaybe)
+import           Data.Semigroup               (Semigroup (..))
+import           Data.Sequence                (Seq)
+import           Data.Vector.Storable         (Vector)
+
+import           Data.Tree
+
+import qualified Data.ByteArray               as BA
+import qualified Data.ByteString              as BS
+import qualified Data.ByteString.Char8        as Char8
+import qualified Data.ByteString.Lazy         as LS
+import qualified Data.Map.Strict              as Map
+import qualified Data.Sequence                as Seq
+import qualified Data.Tree.Zipper             as Zipper
+import qualified Data.Vector.Storable         as Vector
+>>>>>>> 759c53a185ac915819aff46862a4705e65d712c7
 import qualified Data.Vector.Storable.Mutable as Vector
 
-import qualified Data.Vector as RegularVector
+import qualified Data.Vector                  as RegularVector
 
-import Crypto.Number.ModArithmetic (expFast)
-import Crypto.Hash (Digest, SHA256, RIPEMD160)
-import qualified Crypto.Hash as Crypto
+import           Crypto.Hash                  (Digest, RIPEMD160, SHA256)
+import qualified Crypto.Hash                  as Crypto
+import           Crypto.Number.ModArithmetic  (expFast)
 
 -- * Data types
 
@@ -98,18 +127,18 @@ deriving instance Show VMResult
 
 -- | The state of a stepwise EVM execution
 data VM = VM
-  { _result         :: Maybe VMResult
-  , _state          :: FrameState
-  , _frames         :: [Frame]
-  , _env            :: Env
-  , _block          :: Block
-  , _tx             :: TxState
-  , _logs           :: Seq Log
-  , _traces         :: Zipper.TreePos Zipper.Empty Trace
-  , _cache          :: Cache
-  , _burned         :: Word
-  , _constraints    :: [(SBool, Whiff)]
-  , _iterations     :: Map CodeLocation Int
+  { _result      :: Maybe VMResult
+  , _state       :: FrameState
+  , _frames      :: [Frame]
+  , _env         :: Env
+  , _block       :: Block
+  , _tx          :: TxState
+  , _logs        :: Seq Log
+  , _traces      :: Zipper.TreePos Zipper.Empty Trace
+  , _cache       :: Cache
+  , _burned      :: Word
+  , _constraints :: [(SBool, Whiff)]
+  , _iterations  :: Map CodeLocation Int
   }
   deriving (Show)
 
@@ -174,30 +203,30 @@ data BranchCondition = Case Bool | Unknown | Inconsistent
 -- any expensive query that is constant at least within a block.
 data Cache = Cache
   { _fetched :: Map Addr Contract,
-    _path :: Map (CodeLocation, Int) Bool
+    _path    :: Map (CodeLocation, Int) Bool
   } deriving Show
 
 -- | A way to specify an initial VM state
 data VMOpts = VMOpts
-  { vmoptContract :: Contract
-  , vmoptCalldata :: (Buffer, SWord 256)
-  , vmoptValue :: SymWord
-  , vmoptAddress :: Addr
-  , vmoptCaller :: SAddr
-  , vmoptOrigin :: Addr
-  , vmoptGas :: W256
-  , vmoptGaslimit :: W256
-  , vmoptNumber :: W256
-  , vmoptTimestamp :: SymWord
-  , vmoptCoinbase :: Addr
-  , vmoptDifficulty :: W256
-  , vmoptMaxCodeSize :: W256
+  { vmoptContract      :: Contract
+  , vmoptCalldata      :: (Buffer, SWord 256)
+  , vmoptValue         :: SymWord
+  , vmoptAddress       :: Addr
+  , vmoptCaller        :: SAddr
+  , vmoptOrigin        :: Addr
+  , vmoptGas           :: W256
+  , vmoptGaslimit      :: W256
+  , vmoptNumber        :: W256
+  , vmoptTimestamp     :: SymWord
+  , vmoptCoinbase      :: Addr
+  , vmoptDifficulty    :: W256
+  , vmoptMaxCodeSize   :: W256
   , vmoptBlockGaslimit :: W256
-  , vmoptGasprice :: W256
-  , vmoptSchedule :: FeeSchedule Integer
-  , vmoptChainId :: W256
-  , vmoptCreate :: Bool
-  , vmoptStorageModel :: StorageModel
+  , vmoptGasprice      :: W256
+  , vmoptSchedule      :: FeeSchedule Integer
+  , vmoptChainId       :: W256
+  , vmoptCreate        :: Bool
+  , vmoptStorageModel  :: StorageModel
   } deriving Show
 
 -- | A log entry
@@ -206,8 +235,8 @@ data Log = Log Addr Buffer [SymWord]
 
 -- | An entry in the VM's "call/create stack"
 data Frame = Frame
-  { _frameContext   :: FrameContext
-  , _frameState     :: FrameState
+  { _frameContext :: FrameContext
+  , _frameState   :: FrameState
   }
   deriving (Show)
 
@@ -252,14 +281,14 @@ data FrameState = FrameState
 
 -- | The state that spans a whole transaction
 data TxState = TxState
-  { _gasprice        :: Word
-  , _txgaslimit      :: Word
-  , _origin          :: Addr
-  , _toAddr          :: Addr
-  , _value           :: SymWord
-  , _substate        :: SubState
-  , _isCreate        :: Bool
-  , _txReversion     :: Map Addr Contract
+  { _gasprice    :: Word
+  , _txgaslimit  :: Word
+  , _origin      :: Addr
+  , _toAddr      :: Addr
+  , _value       :: SymWord
+  , _substate    :: SubState
+  , _isCreate    :: Bool
+  , _txReversion :: Map Addr Contract
   }
   deriving (Show)
 
@@ -1520,6 +1549,7 @@ parseModexpLength input =
       lenm = w256 $ word $ LS.toStrict $ lazySlice 64 96 input
   in (lenb, lene, lenm)
 
+--- checks if a range of ByteString bs starting at offset and length size is all zeros.
 isZero :: Word -> Word -> ByteString -> Bool
 isZero offset size bs =
   LS.all (== 0) $
@@ -1659,7 +1689,7 @@ accessStorage addr slot continue =
 accountExists :: Addr -> VM -> Bool
 accountExists addr vm =
   case view (env . contracts . at addr) vm of
-    Just c -> not (accountEmpty c)
+    Just c  -> not (accountEmpty c)
     Nothing -> False
 
 -- EIP 161
@@ -1793,32 +1823,32 @@ burn n' continue =
 forceConcreteAddr :: SAddr -> (Addr -> EVM ()) -> EVM ()
 forceConcreteAddr n continue = case maybeLitAddr n of
   Nothing -> vmError UnexpectedSymbolicArg
-  Just c -> continue c
+  Just c  -> continue c
 
 forceConcrete :: SymWord -> (Word -> EVM ()) -> EVM ()
 forceConcrete n continue = case maybeLitWord n of
   Nothing -> vmError UnexpectedSymbolicArg
-  Just c -> continue c
+  Just c  -> continue c
 
 forceConcrete2 :: (SymWord, SymWord) -> ((Word, Word) -> EVM ()) -> EVM ()
 forceConcrete2 (n,m) continue = case (maybeLitWord n, maybeLitWord m) of
   (Just c, Just d) -> continue (c, d)
-  _ -> vmError UnexpectedSymbolicArg
+  _                -> vmError UnexpectedSymbolicArg
 
 forceConcrete3 :: (SymWord, SymWord, SymWord) -> ((Word, Word, Word) -> EVM ()) -> EVM ()
 forceConcrete3 (k,n,m) continue = case (maybeLitWord k, maybeLitWord n, maybeLitWord m) of
   (Just c, Just d, Just f) -> continue (c, d, f)
-  _ -> vmError UnexpectedSymbolicArg
+  _                        -> vmError UnexpectedSymbolicArg
 
 forceConcrete4 :: (SymWord, SymWord, SymWord, SymWord) -> ((Word, Word, Word, Word) -> EVM ()) -> EVM ()
 forceConcrete4 (k,l,n,m) continue = case (maybeLitWord k, maybeLitWord l, maybeLitWord n, maybeLitWord m) of
   (Just b, Just c, Just d, Just f) -> continue (b, c, d, f)
-  _ -> vmError UnexpectedSymbolicArg
+  _                                -> vmError UnexpectedSymbolicArg
 
 forceConcrete5 :: (SymWord, SymWord, SymWord, SymWord, SymWord) -> ((Word, Word, Word, Word, Word) -> EVM ()) -> EVM ()
 forceConcrete5 (k,l,m,n,o) continue = case (maybeLitWord k, maybeLitWord l, maybeLitWord m, maybeLitWord n, maybeLitWord o) of
   (Just a, Just b, Just c, Just d, Just e) -> continue (a, b, c, d, e)
-  _ -> vmError UnexpectedSymbolicArg
+  _                                        -> vmError UnexpectedSymbolicArg
 
 forceConcrete6 :: (SymWord, SymWord, SymWord, SymWord, SymWord, SymWord) -> ((Word, Word, Word, Word, Word, Word) -> EVM ()) -> EVM ()
 forceConcrete6 (k,l,m,n,o,p) continue = case (maybeLitWord k, maybeLitWord l, maybeLitWord m, maybeLitWord n, maybeLitWord o, maybeLitWord p) of
@@ -2423,7 +2453,7 @@ checkJump x xs = do
 
 opSize :: Word8 -> Int
 opSize x | x >= 0x60 && x <= 0x7f = num x - 0x60 + 2
-opSize _                          = 1
+opSize _ = 1
 
 -- Index i of the resulting vector contains the operation index for
 -- the program counter value i.  This is needed because source map
